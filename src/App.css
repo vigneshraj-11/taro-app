@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.login-container {
+  width: 100vw;
+  height: 100vh;
+  background-image: url("../src/assets/images/BG/bg-image-1.png");
+  background-size: cover;
+}
+
+@keyframes blinkYellow {
+  0% {
+    box-shadow: 0 0 10px 4px rgba(255, 255, 0, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 10px 0px rgba(255, 255, 0, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 10px 4px rgba(255, 255, 0, 0.7);
+  }
+}
+
+@keyframes blinkGreen {
+  0% {
+    box-shadow: 0 0 10px 4px rgba(0, 255, 0, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 10px 0px rgba(0, 255, 0, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 10px 4px rgba(0, 255, 0, 0.7);
+  }
+}
+
+@keyframes blinkRed {
+  0% {
+    box-shadow: 0 0 10px 4px rgba(255, 0, 0, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 10px 0px rgba(255, 0, 0, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 10px 4px rgba(255, 0, 0, 0.7);
+  }
+}
+
+@keyframes blinkBlue {
+  0% {
+    box-shadow: 0 0 10px 4px rgba(0, 0, 255, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 10px 0px rgba(0, 0, 255, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 10px 4px rgba(0, 0, 255, 0.7);
+  }
+}
+
+.shadow-glow-yellow {
+  animation: blinkYellow 3s infinite ease-in-out;
+}
+
+.shadow-glow-green {
+  animation: blinkGreen 3s infinite ease-in-out;
+}
+
+.shadow-glow-red {
+  animation: blinkRed 3s infinite ease-in-out;
+}
+
+.shadow-glow-blue {
+  animation: blinkBlue 3s infinite ease-in-out;
+}
+
+.ant-modal-close-x {
+  display: none !important;
+}
+
+.ant-table-thead tr th {
+  background-color: rgb(71, 140, 231) !important;
+  color: white !important;
+  text-align: center !important;
+}
