@@ -1,19 +1,31 @@
-# taro-app
-Taro Application Frontend Using React JS
 
-# To set up the Taro application locally, follow these steps:
+# Taro-App
 
-# Clone the repository using the command:
-git clone https://github.com/vigneshraj-11/taro-app.git
+**Taro Application Frontend Using React JS**
 
-# Navigate to the project directory:
-cd taro-app
+## To set up the Taro application locally, follow these steps:
 
-# Install the necessary dependencies with the following command:
-npm i --force --save
+1. **Clone the repository using the command:**
+   ```bash
+   git clone https://github.com/vigneshraj-11/taro-app.git
+   ```
 
-# Start the development server by running:
-npm start
+2. **Navigate to the project directory:**
+   ```bash
+   cd taro-app
+   ```
 
-# To create a production build, use the command:
-npm build
+3. **Install the necessary dependencies:**
+   ```bash
+   npm install --force
+   ```
+
+4. **Start the development server:**
+   ```bash
+   npm start
+   ```
+
+5. **To create a production build, use the following command:**
+   ```bash
+   npm run build
+   ```
