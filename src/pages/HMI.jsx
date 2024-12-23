@@ -183,7 +183,7 @@ const HMI = () => {
 
       const response = await toggleMachineMode(requestData);
 
-      console.log("Response:", response); //remove for checking
+      console.log("Response:", response); //remove
 
       if (response) {
         setMessage("Updated Successfully");
@@ -244,7 +244,7 @@ const HMI = () => {
 
       if (currentMode.isDisabled) currentMode.isDisabled(false);
 
-      console.log(`Machine mode changed: ${newStatus}`); //remove for checking
+      console.log(`Machine mode changed: ${newStatus}`); //remove
 
       setConfirmLoading(false);
       setOpen(false);
@@ -723,7 +723,7 @@ const HMI = () => {
 
     const response = await confirmation(requestData);
 
-    console.log("Response:", response); //remove for checking
+    console.log("Response:", response); //remove
 
     if (response) {
       setMessage("Updated Successfully");
