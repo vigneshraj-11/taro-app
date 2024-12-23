@@ -162,8 +162,7 @@ const HMI = () => {
       if (type !== "Maintenance") setIsDisabled(false);
       if (isEnabled) setSystemEnableStatus(true);
 
-      alert(newStatus); // remove for Checking
-
+      console.log("Constructing Request Data...");
       const requestData = {
         machine_id: machineID,
         operation: operation,
@@ -177,7 +176,7 @@ const HMI = () => {
         vendor_name: selectedVendor,
       };
 
-      console.log("Request Data:", requestData); //remove for checking
+      console.log("Request Data:", requestData);
 
       return; //remove
 
@@ -505,7 +504,12 @@ const HMI = () => {
           const newTime = prevTime + 1;
 
           if (newTime === Math.floor(maxTime * 0.8)) {
-            handleShowModal1("Yellow Alert", "Reaching 80% of allocated time!");
+            if (reasonMessage === "" || reasonMessage === "Reason Message") {
+              handleShowModal1(
+                "Yellow Alert",
+                "Reaching 80% of allocated time!"
+              );
+            }
           }
 
           if (newTime >= maxTime) {
@@ -702,7 +706,7 @@ const HMI = () => {
       operator1: empId,
       operator2,
       part_name: partname,
-      progarm: selectedProgram,
+      program: selectedProgram,
       shift,
       vendor_name: selectedVendor,
       machine_mode: newMode,
@@ -711,7 +715,7 @@ const HMI = () => {
       ideal_time: formatTime(time),
     };
 
-    console.log("Request Data:", requestData); //remove for checking
+    console.log("Confirmation Data:", requestData);
 
     return; //remove
 
