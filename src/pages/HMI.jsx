@@ -162,7 +162,6 @@ const HMI = () => {
       if (type !== "Maintenance") setIsDisabled(false);
       if (isEnabled) setSystemEnableStatus(true);
 
-      console.log("Constructing Request Data...");
       const requestData = {
         machine_id: machineID,
         operation: operation,
@@ -715,7 +714,7 @@ const HMI = () => {
       ideal_time: formatTime(time),
     };
 
-    console.log("Confirmation Data:", requestData);
+    console.log("Confirmation Data:", requestData); //remove
 
     return; //remove
 
