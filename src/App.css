@@ -82,3 +82,10 @@
   color: white !important;
   text-align: center !important;
 }
+
+.input-design {
+  background-color: burlywood !important;
+  color: black !important;
+  font-weight: bolder !important;
+  text-align: center;
+}

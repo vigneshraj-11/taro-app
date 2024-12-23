@@ -1,96 +1,105 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Input, Button, message } from "antd";
-import OnScreenKeyboard from "../components/OnScreenKeyboard";
+import { Input } from "antd";
+import VirtualKeyboard from "../components/VirtualKeyboard";
+import { EmpLogin } from "../apicalling/apis";
+import { useNavigate } from "react-router-dom";
 
 function Login() {
   const [empid, setEmpid] = useState("");
   const [loginMessage, setLoginMessage] = useState("");
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-  const [inputWidth, setInputWidth] = useState("400px");
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isFocused, setIsFocused] = useState(false);
+  const [keyboardPosition, setKeyboardPosition] = useState({ x: 0, y: 0 });
   const inputRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Event listener for handling physical keyboard input
-    const handleKeyDown = (event) => {
-      if (isFocused) {
-        if (event.key === "Backspace") {
-          setEmpid((prev) => prev.slice(0, -1)); // Handle backspace
-        } else if (event.key === " ") {
-          setEmpid((prev) => prev + " "); // Handle space
-        } else if (event.key.length === 1) {
-          setEmpid((prev) => prev + event.key); // Add the typed character
-        } else if (event.key === "Enter") {
-          handleLogin(); // Trigger login on Enter key press
-        }
+    const handleClickOutside = (event) => {
+      if (
+        isKeyboardVisible &&
+        inputRef.current &&
+        !inputRef.current.input.contains(event.target) &&
+        !event.target.closest(".virtual-keyboard")
+      ) {
+        setIsKeyboardVisible(false);
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown); // Clean up event listener
+      document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isFocused]);
+  }, [isKeyboardVisible]);
 
   const handleInputFocus = () => {
-    setIsKeyboardVisible(true);
-    setIsFocused(true); // Mark input as focused
-
-    // Access DOM element and calculate position
-    if (inputRef.current && inputRef.current.input) {
-      const { left, top, height } =
-        inputRef.current.input.getBoundingClientRect();
-      setPosition({
-        x: left,
-        y: top + height + 10, // Place keyboard below input field
+    if (inputRef.current?.input) {
+      const rect = inputRef.current.input.getBoundingClientRect();
+      setKeyboardPosition({
+        x: rect.left + window.scrollX,
+        y: rect.bottom + window.scrollY + 8,
       });
-      setInputWidth(`${inputRef.current.input.offsetWidth}px`);
+      setIsKeyboardVisible(true);
     }
   };
 
-  const handleInputChange = (input) => {
-    setEmpid(input);
+  const handleKeyPress = (key, isCapsEnabled) => {
+    if (key === "Backspace") {
+      setEmpid((prev) => prev.slice(0, -1));
+    } else if (key === "Space") {
+      setEmpid((prev) => prev + " ");
+    } else if (key === "Enter") {
+      setIsKeyboardVisible(false);
+    } else if (key === "Tab") {
+      setEmpid((prev) => prev + "\t");
+    } else {
+      const effectiveKey =
+        isCapsEnabled && /^[a-zA-Z]$/.test(key)
+          ? key.toUpperCase()
+          : !isCapsEnabled && /^[a-zA-Z]$/.test(key)
+          ? key.toLowerCase()
+          : key;
+
+      setEmpid((prev) => prev + effectiveKey);
+    }
   };
 
-  let debounceTimeout = null;
-
-  const handleKeyPress = (button) => {
-    if (debounceTimeout) clearTimeout(debounceTimeout);
-
-    debounceTimeout = setTimeout(() => {
-      if (button === "{enter}") {
-        handleLogin(); // Trigger login on Enter button press
-      } else if (button === "{bksp}") {
-        setEmpid((prev) => prev.slice(0, -1)); // Handle backspace
-      } else if (button === "{space}") {
-        setEmpid((prev) => prev + " "); // Handle space
-      } else {
-        setEmpid((prev) => prev + button); // Append typed character
-      }
-    }, 100); // Add a delay to prevent rapid typing
+  const handleChange = (e) => {
+    setEmpid(e.target.value);
   };
 
-  const handleInputBlur = () => {
-    // Only hide the keyboard if the input field loses focus AND if there is no ongoing typing
-    if (!isFocused) return;
-
-    setTimeout(() => {
-      setIsKeyboardVisible(false); // Hide keyboard after a small delay
-    }, 200);
-  };
-
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (empid.trim() === "") {
-      message.error("Please enter a valid Employee ID!");
+      setLoginMessage("Please enter a valid Employee ID!");
+      setEmpid("");
       return;
     }
 
-    setLoginMessage(`Welcome Employee ${empid}`);
-    message.success("Login successful!");
-    setEmpid("");
-    setIsKeyboardVisible(false); // Hide keyboard on successful login
+    try {
+      const data = await EmpLogin(empid);
+      const { name, greeting, message } = data;
+
+      setLoginMessage(message);
+
+      const getCurrentShift = () => {
+        const currentTime = new Date();
+        const hours = currentTime.getHours();
+
+        if (hours >= 6 && hours < 14) return "1";
+        if (hours >= 14 && hours < 22) return "2";
+        return "3";
+      };
+
+      const currentShift = getCurrentShift();
+      localStorage.setItem("empid", empid);
+      localStorage.setItem("currentShift", currentShift);
+
+      navigate("/welcome", { state: { empName: name, greeting: greeting } });
+
+      setEmpid("");
+    } catch (error) {
+      setLoginMessage("Login failed! Please try again.");
+      console.error("Login Error:", error);
+    }
   };
 
   return (
@@ -101,33 +110,33 @@ function Login() {
           <div className="mb-4">
             <Input
               type="text"
-              ref={inputRef}
               value={empid}
+              ref={inputRef}
               onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
+              onChange={handleChange}
               placeholder="Enter Employee ID"
               className="py-2 px-3 border rounded-md"
-              readOnly
             />
           </div>
-          <Button type="primary" className="w-full" onClick={handleLogin}>
+          <button
+            className="w-full bg-blue-500 text-white font-semibold hover:bg-blue-600 p-2 border-none rounded-md"
+            onClick={handleLogin}
+          >
             Log In
-          </Button>
+          </button>
           {loginMessage && (
-            <p className="text-green-500 text-center mt-4">{loginMessage}</p>
+            <p className="text-red-500 font-semibold text-center mt-4">
+              {loginMessage}
+            </p>
           )}
         </div>
       </div>
-
-      {/* On-screen Keyboard */}
-      <OnScreenKeyboard
-        input={empid}
-        onChange={handleInputChange}
-        onKeyPress={handleKeyPress}
-        isVisible={isKeyboardVisible}
-        inputWidth={inputWidth}
-        position={position} // Pass the calculated position
-      />
+      {isKeyboardVisible && (
+        <VirtualKeyboard
+          onKeyPress={handleKeyPress}
+          initialPosition={keyboardPosition}
+        />
+      )}
     </div>
   );
 }

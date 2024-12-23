@@ -7,20 +7,66 @@ import HMI from "../pages/HMI";
 import ToolLife from "../pages/ToolLife";
 import Reasons from "../pages/Reasons";
 import ReasonDetails from "../pages/ReasonDetails";
+import PrivateRoute from "./PrivateRoute";
+import SessionProvider from "./SessionProvider";
 
 function Routers() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/welcome" element={<Welcome />} />
-        <Route path="/ms" element={<MachineStatus />} />
-        <Route path="/hmi" element={<HMI />} />
-        <Route path="/toollife" element={<ToolLife />} />
-        <Route path="/reasons" element={<Reasons />} />
-        <Route path="/reasondetails" element={<ReasonDetails />} />
-      </Routes>
+      <SessionProvider>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/welcome"
+            element={
+              <PrivateRoute>
+                <Welcome />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/ms"
+            element={
+              <PrivateRoute>
+                <MachineStatus />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/hmi"
+            element={
+              <PrivateRoute>
+                <HMI />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/toollife"
+            element={
+              <PrivateRoute>
+                <ToolLife />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/reasons"
+            element={
+              <PrivateRoute>
+                <Reasons />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/reasondetails"
+            element={
+              <PrivateRoute>
+                <ReasonDetails />
+              </PrivateRoute>
+            }
+          />
+        </Routes>
+      </SessionProvider>
     </Router>
   );
 }

@@ -7,12 +7,13 @@
     "antd": "^5.22.5",
     "axios": "^1.7.9",
     "cra-template": "1.2.0",
+    "dotenv": "^16.4.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-draggable": "^4.4.6",
     "react-router-dom": "^7.0.2",
     "react-scripts": "5.0.1",
-    "react-simple-keyboard": "^3.8.28",
+    "sweetalert2": "^11.15.2",
     "web-vitals": "^4.2.4"
   },
   "scripts": {

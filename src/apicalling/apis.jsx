@@ -1,7 +1,34 @@
 import axios from "axios";
+import Swal from "sweetalert2";
 
-const BASE_URL = "http://localhost:5001"; //Vignesh Replace with Live URL
-const cell_name = "Impeller Cell";
+const BASE_URL = process.env.REACT_APP_BASE_URL;
+const cell_name = process.env.REACT_APP_CELL_NAME;
+
+const showError = (title, message) => {
+  Swal.fire({
+    icon: "error",
+    title: title,
+    text: message,
+    confirmButtonText: "OK",
+  });
+};
+
+export const EmpLogin = async (empid) => {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/emplogin`,
+      { empid },
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error during login:", error);
+    showError("Login Failed", error.response?.data?.message || error.message);
+    throw error;
+  }
+};
 
 export const fetchStatus = async () => {
   try {
@@ -12,16 +39,43 @@ export const fetchStatus = async () => {
     return await response.json();
   } catch (error) {
     console.error("Error fetching data:", error);
+    showError("Fetch Status Failed", error.message);
     throw error;
   }
 };
 
-export const fetchProgram = async (machineID, backgroundColor) => {
+export const fetchHMIDetails = async (machineID) => {
   try {
     const response = await axios.get(`${BASE_URL}/hmi/${machineID}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching program number:", error);
+    console.error("Error fetching:", error);
+    showError(
+      "Fetching Failed",
+      error.response?.data?.message || error.message
+    );
+    throw error;
+  }
+};
+
+export const FetchPartInfo = async (machineID, programNumber) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/hmi/part-info`, {
+      params: {
+        machineID,
+        programNumber,
+      },
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error retrieving part info:", error);
+    showError(
+      "Fetch Part info Failed",
+      error.response?.data?.message || error.message
+    );
     throw error;
   }
 };
@@ -31,7 +85,11 @@ export const fetchTool = async () => {
     const response = await axios.get(`${BASE_URL}/tools`);
     return response;
   } catch (error) {
-    console.error("Error fetching program number:", error);
+    console.error("Error fetching tools:", error);
+    showError(
+      "Fetch Tools Failed",
+      error.response?.data?.message || error.message
+    );
     throw error;
   }
 };
@@ -42,6 +100,10 @@ export const fetchReasons = async () => {
     return response;
   } catch (error) {
     console.error("Error fetching reasons:", error);
+    showError(
+      "Fetch Reasons Failed",
+      error.response?.data?.message || error.message
+    );
     throw error;
   }
 };
@@ -52,16 +114,168 @@ export const fetchReasonItems = async (reason) => {
     return response;
   } catch (error) {
     console.error("Error fetching reasons items:", error);
+    showError(
+      "Fetch Reason Items Failed",
+      error.response?.data?.message || error.message
+    );
     throw error;
   }
 };
 
-export const fetchConnection = async (machineID, backgroundColor) => {
+export const fetchConnection = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/ethernet/connection`);
     return response;
   } catch (error) {
-    console.error("Error fetching program number:", error);
+    console.error("Error fetching connection:", error);
+    showError(
+      "Fetch Connection Failed",
+      error.response?.data?.message || error.message
+    );
+    throw error;
+  }
+};
+
+export const fetchVendorList = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/vendorList`, {
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (Array.isArray(response.data)) {
+      return response.data.map((vendor) => ({
+        label: vendor.label,
+        value: vendor.label,
+      }));
+    } else {
+      console.error("Unexpected response format:", response.data);
+      throw new Error("Unexpected response format.");
+    }
+  } catch (error) {
+    console.error("Error fetching vendor list:", error);
+    showError(
+      "Fetching Vendor List Failed",
+      error.response?.data?.message || error.message
+    );
+    throw error;
+  }
+};
+
+export const fetchProgramList = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/programNoList`, {
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (Array.isArray(response.data)) {
+      return response.data;
+    } else {
+      console.error("Unexpected response format:", response.data);
+      throw new Error("Unexpected response format.");
+    }
+  } catch (error) {
+    console.error("Error fetching vendor list:", error);
+    showError(
+      "Fetching Vendor List Failed",
+      error.response?.data?.message || error.message
+    );
+    throw error;
+  }
+};
+
+export const postIdealTime = async (master_id, program_no, ideal_time) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/newIdleTime`, {
+      master_id,
+      program_no,
+      ideal_time,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error during POST request:", error);
+    showError(
+      "Error during POST Ideal request",
+      error.response?.data?.message || error.message
+    );
+    throw error;
+  }
+};
+
+export const fetchIdealTime = async (master_id, program_no, toggle) => {
+  try {
+    console.log({
+      master_id,
+      program_no,
+      toggle,
+    });
+    const response = await axios.get(`${BASE_URL}/newIdleTime`, {
+      params: {
+        master_id,
+        program_no,
+        toggle,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error during GET request:", error);
+    showError(
+      "Error during GET Ideal request",
+      error.response?.data?.message || error.message
+    );
+    throw error;
+  }
+};
+
+export const postReasonDetail = async (
+  master_id,
+  ideal_reason_group,
+  ideal_reason
+) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/reason`, {
+      master_id,
+      ideal_reason_group,
+      ideal_reason,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error during POST Reason request:", error);
+    showError(
+      "Error during POST Reason request",
+      error.response?.data?.message || error.message
+    );
+    throw error;
+  }
+};
+
+export const toggleMachineMode = async (data) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/toggle`, data, {
+      headers: { "Content-Type": "application/json" },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error in toggle API:", error);
+    showError(
+      error.response?.data?.message ||
+        "An unexpected error occurred. Please try again."
+    );
+    throw error;
+  }
+};
+
+export const confirmation = async (data) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/confirmation`, data, {
+      headers: { "Content-Type": "application/json" },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error in confirmation API:", error);
+    showError(
+      error.response?.data?.message ||
+        "An unexpected error occurred. Please try again."
+    );
     throw error;
   }
 };

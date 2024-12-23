@@ -8,25 +8,32 @@ function MachineStatus() {
   const [machineData, setMachineData] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const refreshInterval =
+    parseInt(process.env.REACT_APP_REFRESH_INTERVAL, 10) || 15000;
 
-  const fetchMachineData = async () => {
+  const fetchMachineData = async (showLoader = false) => {
     try {
-      setLoading(true);
-      setTimeout(async () => {
-        const result = await fetchStatus();
-        setMachineData(result);
-        setLoading(false);
-      }, 2000);
+      if (showLoader) setLoading(true);
+      const result = await fetchStatus();
+      setMachineData(result);
     } catch (error) {
       console.error("Error fetching machine data:", error);
       message.error("Failed to fetch machine data.");
-      setLoading(false);
+    } finally {
+      //
+      if (showLoader) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchMachineData();
-  }, []);
+    fetchMachineData(true);
+
+    const interval = setInterval(() => {
+      fetchMachineData(false);
+    }, refreshInterval);
+
+    return () => clearInterval(interval);
+  }, [refreshInterval]);
 
   const getMachineDetails = (machineStatus) => {
     switch (machineStatus) {
@@ -72,9 +79,6 @@ function MachineStatus() {
   return (
     <div>
       <Header />
-      {/* <div className="flex items-center justify-center p-5">
-        <div className="text-xl font-semibold">Machine Status</div>
-      </div> */}
       <div className="container mx-auto p-5">
         {loading ? (
           <div className="flex justify-center items-center mt-20">
@@ -86,7 +90,7 @@ function MachineStatus() {
               const machineDetails = getMachineDetails(machine.MCEVENTMODE);
               return (
                 <div key={index} className="p-2 mb-2 mt-2">
-                  <h2 className="text-md font-bold mb-5">
+                  <h2 className="text-md text-center font-bold mb-5">
                     {machine.MACHINEID} {machine.spindle} (
                     {machine.MACHINEMODELNAME})
                   </h2>

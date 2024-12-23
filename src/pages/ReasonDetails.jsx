@@ -11,7 +11,8 @@ function ReasonDetails() {
   const location = useLocation();
   const [openSettings, setopenSettings] = useState(false);
   const { state } = location;
-  const { reason } = state || {};
+  const { reason, machine, color, programno, vendor, partnames, opertors } =
+    state || {};
 
   const [reasons, setReasons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,6 +60,19 @@ function ReasonDetails() {
               <div
                 key={index}
                 className="w-56 h-28 p-4 flex items-center justify-center bg-white rounded-lg text-blue-500 cursor-pointer hover:bg-blue-600 hover:text-white shadow-md border border-gray-300 hover:shadow-lg transition duration-300"
+                onClick={() => {
+                  navigate("/hmi", {
+                    state: {
+                      reasonValue: item,
+                      machineID: machine,
+                      backgroundColor: color,
+                      programno: programno,
+                      vendor: vendor,
+                      partnames: partnames,
+                      opertors: opertors,
+                    },
+                  });
+                }}
               >
                 <p className="text-lg font-semibold text-center">{item}</p>
               </div>
@@ -83,7 +97,15 @@ function ReasonDetails() {
       <div>
         {openSettings && (
           <>
-            <ReasonModal onClose={() => setopenSettings(false)} />
+            <ReasonModal
+              onClose={() => setopenSettings(false)}
+              machineID={machine}
+              backgroundColor={color}
+              programno={programno}
+              vendor={vendor}
+              partnames={partnames}
+              opertors={opertors}
+            />
           </>
         )}
       </div>

@@ -17,6 +17,20 @@ function HMIHeader() {
     ethernet1: "disconnected",
     ethernet2: "disconnected",
   });
+  const [empId, setEmpId] = useState(null);
+  const [shift, setShift] = useState(null);
+
+  useEffect(() => {
+    const storedEmpId = localStorage.getItem("empid");
+    const storedShift = localStorage.getItem("currentShift");
+
+    if (storedShift && storedEmpId) {
+      setShift(storedShift);
+      setEmpId(storedEmpId);
+    } else {
+      setShift("No shift assigned");
+    }
+  }, []);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -119,7 +133,7 @@ function HMIHeader() {
         </div>
 
         <div className="text-center text-orange-400 font-semibold space-y-1 hidden md:block">
-          <h4 className="text-xl">Shift: 1</h4>
+          <h4 className="text-xl">Shift: {shift}</h4>
           <h4 className="text-lg">{formattedDate}</h4>
           <h4 className="text-lg">{formattedTime}</h4>
         </div>

@@ -13,13 +13,25 @@ function Reasons() {
   const [openSettings, setopenSettings] = useState(false);
   const location = useLocation();
   const { state } = location;
-  const { backButton } = state || {};
+  const {
+    backButton,
+    machineID,
+    backgroundColor,
+    programno,
+    vendor,
+    partnames,
+    opertors,
+  } = state || {};
+  const [machine, setMachine] = useState("");
+  const [color, setColor] = useState("");
 
   useEffect(() => {
     const fetchReasonsList = async () => {
       try {
         const response = await fetchReasons();
         setReasons(response.data);
+        setMachine(machineID);
+        setColor(backgroundColor);
       } catch (error) {
         console.error("Error fetching reasons:", error);
       } finally {
@@ -61,7 +73,17 @@ function Reasons() {
               key={index}
               className="p-10 bg-white rounded-lg text-blue-500  cursor-pointer hover:bg-blue-600 hover:text-white shadow-md border border-gray-300 hover:shadow-lg transition duration-300"
               onClick={() => {
-                navigate("/reasondetails", { state: { reason } });
+                navigate("/reasondetails", {
+                  state: {
+                    reason,
+                    machine,
+                    color,
+                    programno,
+                    vendor,
+                    partnames,
+                    opertors,
+                  },
+                });
               }}
             >
               <p className="text-lg font-semibold text-center">{reason}</p>
@@ -82,7 +104,15 @@ function Reasons() {
       <div>
         {openSettings && (
           <>
-            <ReasonModal onClose={() => setopenSettings(false)} />
+            <ReasonModal
+              onClose={() => setopenSettings(false)}
+              machineID={machine}
+              backgroundColor={color}
+              programno={programno}
+              vendor={vendor}
+              partnames={partnames}
+              opertors={opertors}
+            />
           </>
         )}
       </div>
