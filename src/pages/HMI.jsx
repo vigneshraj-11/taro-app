@@ -162,6 +162,8 @@ const HMI = () => {
       if (type !== "Maintenance") setIsDisabled(false);
       if (isEnabled) setSystemEnableStatus(true);
 
+      setOpen(false);
+
       const requestData = {
         machine_id: machineID,
         operation: operation,
@@ -193,6 +195,7 @@ const HMI = () => {
         }, 3000);
       }
 
+      fetchHMI();
       setConfirmLoading(false);
       setOpen(false);
     } catch (error) {
@@ -408,7 +411,7 @@ const HMI = () => {
       if (reasonValue) {
         setReasonMessage(reasonValue);
       }
-      setMachineStatus(getStatusMessage(backgroundColor));
+      setMachineStatus(getStatusMessage(backgroundColor).toUpperCase());
     } else {
       setShift("No shift assigned");
     }
@@ -730,6 +733,8 @@ const HMI = () => {
         setMessage("");
         setMessageType("");
       }, 3000);
+      
+      fetchHMI();
     }
   };
 
