@@ -15,6 +15,8 @@ const ReasonModal = ({
   vendor,
   partnames,
   opertors,
+  reasonGroup,
+  operator2,
 }) => {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -28,6 +30,14 @@ const ReasonModal = ({
   const [keyboardPosition, setKeyboardPosition] = useState({ x: 0, y: 0 });
   const inputRef = useRef(null);
   const [focusedField, setFocusedField] = useState("");
+  const [disableStatus, setDisableStatus] = useState(false);
+
+  useEffect(() => {
+    if (reasonGroup) {
+      setReasonId(reasonGroup);
+      setDisableStatus(true);
+    }
+  }, [reasonGroup]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -55,6 +65,11 @@ const ReasonModal = ({
       if (key === "Tab") return prevValue + "\t";
       if (key === "Enter") {
         setIsKeyboardVisible(false);
+        if (focusedField === "password") {
+          handleLogin();
+        } else if (focusedField === "reason") {
+          handleSubmitReason();
+        }
         return prevValue;
       }
       const effectiveKey =
@@ -132,6 +147,7 @@ const ReasonModal = ({
           vendor: vendor,
           partnames: partnames,
           opertors: opertors,
+          operators2: operator2,
         },
       });
     }
@@ -232,6 +248,8 @@ const ReasonModal = ({
               <Input
                 placeholder="Enter Reason Group"
                 value={reasonId}
+                disabled={disableStatus}
+                onChange={(e) => setReasonId(e.target.value)}
                 style={{ margin: "10px auto" }}
                 autoComplete="off"
                 ref={inputRef}

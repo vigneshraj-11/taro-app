@@ -11,6 +11,7 @@ import {
   fetchHMIDetails,
   fetchIdealTime,
   fetchVendorList,
+  postOperator2,
   toggleMachineMode,
 } from "../apicalling/apis";
 
@@ -51,6 +52,7 @@ const HMI = () => {
     vendor,
     partnames,
     opertors,
+    operators2,
   } = location.state || {};
   const [transformedData, setTransformedData] = useState([]);
   const [operator2, setOperator2] = useState("");
@@ -75,7 +77,20 @@ const HMI = () => {
     if (!systemEnableStatus) return;
 
     const interval = 100;
-    const step = (interval / (maxTime * 1000)) * 100;
+    const maxTimeMs = maxTime * 1000;
+    const step = (interval / maxTimeMs) * 100;
+
+    const receivedTime = receivedTimestamp
+      ? new Date(receivedTimestamp).getTime()
+      : null;
+    const currentTime = Date.now();
+    const elapsedTime = receivedTime ? currentTime - receivedTime : 0;
+
+    const initialProgress = receivedTime
+      ? Math.min((elapsedTime / maxTimeMs) * 100, 100)
+      : 0;
+
+    setProgress(initialProgress);
 
     const timer = setInterval(() => {
       setProgress((prev) => {
@@ -88,7 +103,7 @@ const HMI = () => {
     }, interval);
 
     return () => clearInterval(timer);
-  }, [maxTime, systemEnableStatus]);
+  }, [maxTime, systemEnableStatus, receivedTimestamp]);
 
   function getStatusMessage(statusColor) {
     switch (statusColor) {
@@ -178,8 +193,6 @@ const HMI = () => {
       };
 
       console.log("Request Data:", requestData);
-
-      return; //remove
 
       const response = await toggleMachineMode(requestData);
 
@@ -290,11 +303,46 @@ const HMI = () => {
         } else {
           setOperation(response[0].operation);
         }
+        if (operators2) {
+          setOperator2(operators2.operator2);
+        } else {
+          setOperator2(response[0].operator2);
+        }
 
         if (response[0].tooglestatus === 1) {
-          if (response[0].timestamp) {
-            setReceivedTimestamp(response[0].timestamp);
+          const program = response[0].programno;
+          const idealTimeResponse = await fetchIdealTime(machineID, program, 1);
+          if (
+            idealTimeResponse &&
+            idealTimeResponse.data &&
+            idealTimeResponse.data.length > 0
+          ) {
+            const idealTime = idealTimeResponse.data[0].IDEAL_TIME;
+            if (idealTime) {
+              setReceivedTimestamp(idealTime);
+            }
           }
+          const idealTimeResponse1 = await fetchIdealTime(
+            machineID,
+            program,
+            0
+          );
+          if (
+            idealTimeResponse1 &&
+            idealTimeResponse1.data &&
+            idealTimeResponse1.data.length > 0
+          ) {
+            const idealTime = idealTimeResponse1.data[0].IDEAL_TIME;
+            if (idealTime) {
+              setMaxTime(idealTime);
+            }
+          }
+          setSystemEnableStatus(true);
+          //Remove this only for Dev purposes
+          console.log("Toggle status: " + 1);
+          console.log("Ideal Time: " + maxTime);
+          console.log("Timestamp: " + idealTimeResponse.data[0].IDEAL_TIME);
+          console.log(receivedTimestamp);
           if (response[0].tooglemode === "SETUP") {
             handleOkViaAPI("Setup");
             setSetupDisabled(false);
@@ -314,9 +362,20 @@ const HMI = () => {
         } else {
           const program = response[0].programno;
           const idealTimeResponse = await fetchIdealTime(machineID, program, 0);
-          if (idealTimeResponse.ideal_time != 0) {
-            setMaxTime(idealTimeResponse.ideal_time);
+          if (
+            idealTimeResponse &&
+            idealTimeResponse.data &&
+            idealTimeResponse.data.length > 0
+          ) {
+            const idealTime = idealTimeResponse.data[0].IDEAL_TIME;
+            if (idealTime !== 0) {
+              setMaxTime(idealTime);
+            }
           }
+          //Remove this only for Dev purposes
+          console.log("Toggle status: " + 0);
+          console.log("Ideal Time: " + maxTime);
+          console.log("Timestamp: " + receivedTimestamp);
         }
         setIsDisabled(true);
       }
@@ -470,6 +529,9 @@ const HMI = () => {
       if (key === "Tab") return prevValue + "\t";
       if (key === "Enter") {
         setIsKeyboardVisible(false);
+        if (focusedField === "operator2") {
+          submitOperator2();
+        }
         return prevValue;
       }
       const effectiveKey =
@@ -497,43 +559,83 @@ const HMI = () => {
     }
   };
 
+  const updateTimer = () => {
+    setTime((prevTime) => {
+      const newTime = prevTime + 1;
+
+      if (newTime === Math.floor(maxTime * 0.8)) {
+        if (reasonMessage === "" || reasonMessage === "Reason Message") {
+          handleShowModal1("Yellow Alert", "Reaching 80% of allocated time!");
+        }
+      }
+
+      if (newTime >= maxTime) {
+        if (reasonMessage === "" || reasonMessage === "Reason Message") {
+          handleShowModal1(
+            "Red Alert",
+            "Critical: Idle time has exceeded the 0-minute limit!"
+          );
+        }
+      }
+
+      return newTime;
+    });
+  };
+
+  useEffect(() => {
+    let timer = null;
+    if (receivedTimestamp === 0) {
+      if (setupEnabled || maintenanceEnabled || reworkEnabled) {
+        timer = setInterval(updateTimer, 1000);
+      } else {
+        setTime(0);
+      }
+      return () => clearInterval(timer);
+    }
+  }, [
+    setupEnabled,
+    maintenanceEnabled,
+    reworkEnabled,
+    navigate,
+    receivedTimestamp,
+  ]);
+
   useEffect(() => {
     let timer = null;
 
-    if (setupEnabled || maintenanceEnabled || reworkEnabled) {
-      timer = setInterval(() => {
-        setTime((prevTime) => {
-          const newTime = prevTime + 1;
+    if (receivedTimestamp !== 0) {
+      const elapsedSeconds = Math.floor(
+        (Date.now() - new Date(receivedTimestamp).getTime()) / 1000
+      );
+      setTime(elapsedSeconds);
 
-          if (newTime === Math.floor(maxTime * 0.8)) {
-            if (reasonMessage === "" || reasonMessage === "Reason Message") {
-              handleShowModal1(
-                "Yellow Alert",
-                "Reaching 80% of allocated time!"
-              );
-            }
-          }
+      if (elapsedSeconds === Math.floor(maxTime * 0.8)) {
+        if (reasonMessage === "" || reasonMessage === "Reason Message") {
+          handleShowModal1("Yellow Alert", "Reaching 80% of allocated time!");
+        }
+      }
 
-          if (newTime >= maxTime) {
-            if (reasonMessage === "" || reasonMessage === "Reason Message") {
-              handleShowModal1(
-                "Red Alert",
-                "Critical: Idle time has exceeded the 0-minute limit!"
-              );
-            }
-          }
-
-          return newTime;
-        });
-      }, 1000);
-    } else {
-      setTime(0);
+      if (elapsedSeconds >= maxTime) {
+        if (reasonMessage === "" || reasonMessage === "Reason Message") {
+          handleShowModal1(
+            "Red Alert",
+            "Critical: Idle time has exceeded the 0-minute limit!"
+          );
+        }
+      }
     }
 
     return () => clearInterval(timer);
-  }, [setupEnabled, maintenanceEnabled, reworkEnabled, navigate]);
+  }, [
+    setupEnabled,
+    maintenanceEnabled,
+    reworkEnabled,
+    navigate,
+    receivedTimestamp,
+    time,
+  ]);
 
-  const submitOperator2 = () => {
+  const submitOperator2 = async () => {
     if (operator2 === "") {
       setMessage("Please fill in Operator 2 before submitting.");
       setMessageType("error");
@@ -542,10 +644,23 @@ const HMI = () => {
         setMessage("");
         setMessageType("");
       }, 3000);
+      return;
     }
     if (operator2 === empId) {
       setMessage("Operator 1 and Operator 2 cannot be the same.");
       setMessageType("error");
+
+      setTimeout(() => {
+        setMessage("");
+        setMessageType("");
+      }, 3000);
+      return;
+    }
+    const response = await postOperator2(operator2);
+
+    if (response) {
+      setMessage("Operator2 Updated Successfully");
+      setMessageType("success");
 
       setTimeout(() => {
         setMessage("");
@@ -578,6 +693,7 @@ const HMI = () => {
                     vendor: { selectedVendor },
                     partnames: { partname },
                     opertors: { operation },
+                    operator2: { operator2 },
                   },
                 });
               }}
@@ -604,6 +720,13 @@ const HMI = () => {
       );
     }
     return null;
+  };
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+    if (/^\d*$/.test(value)) {
+      setOperator2(value);
+    }
   };
 
   const validateFields = () => {
@@ -719,8 +842,6 @@ const HMI = () => {
 
     console.log("Confirmation Data:", requestData); //remove
 
-    return; //remove
-
     const response = await confirmation(requestData);
 
     console.log("Response:", response); //remove
@@ -733,8 +854,12 @@ const HMI = () => {
         setMessage("");
         setMessageType("");
       }, 3000);
-      
-      fetchHMI();
+
+      setReasonMessage("Reason Message");
+
+      navigate("/hmi", {
+        state: { machineID: machineID, backgroundColor: backgroundColor },
+      });
     }
   };
 
@@ -921,6 +1046,7 @@ const HMI = () => {
                 className="rounded-lg input-design"
                 ref={inputRef}
                 value={operator2}
+                onChange={handleChange}
                 onFocus={() => {
                   setFocusedField("operator2");
                   handleInputFocus();
@@ -1007,6 +1133,7 @@ const HMI = () => {
                     vendor: { selectedVendor },
                     partnames: { partname },
                     opertors: { operation },
+                    operator2: { operator2 },
                   },
                 });
               }}

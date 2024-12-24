@@ -48,6 +48,7 @@ function Login() {
     } else if (key === "Space") {
       setEmpid((prev) => prev + " ");
     } else if (key === "Enter") {
+      handleLogin();
       setIsKeyboardVisible(false);
     } else if (key === "Tab") {
       setEmpid((prev) => prev + "\t");

@@ -185,7 +185,7 @@ export const fetchProgramList = async () => {
 
 export const postIdealTime = async (master_id, program_no, ideal_time) => {
   try {
-    const response = await axios.post(`${BASE_URL}/newIdleTime`, {
+    const response = await axios.post(`${BASE_URL}/insert_ideal_time`, {
       master_id,
       program_no,
       ideal_time,
@@ -208,7 +208,7 @@ export const fetchIdealTime = async (master_id, program_no, toggle) => {
       program_no,
       toggle,
     });
-    const response = await axios.get(`${BASE_URL}/newIdleTime`, {
+    const response = await axios.get(`${BASE_URL}/get_ideal_time`, {
       params: {
         master_id,
         program_no,
@@ -232,7 +232,7 @@ export const postReasonDetail = async (
   ideal_reason
 ) => {
   try {
-    const response = await axios.post(`${BASE_URL}/reason`, {
+    const response = await axios.post(`${BASE_URL}/reasons`, {
       master_id,
       ideal_reason_group,
       ideal_reason,
@@ -266,15 +266,35 @@ export const toggleMachineMode = async (data) => {
 
 export const confirmation = async (data) => {
   try {
-    const response = await axios.post(`${BASE_URL}/confirmation`, data, {
-      headers: { "Content-Type": "application/json" },
-    });
+    const response = await axios.post(
+      `${BASE_URL}/reasons_confirmation`,
+      data,
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Error in confirmation API:", error);
     showError(
       error.response?.data?.message ||
         "An unexpected error occurred. Please try again."
+    );
+    throw error;
+  }
+};
+
+export const postOperator2 = async (operator2) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/operator2`, {
+      operator2,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error during POST Operator2 request:", error);
+    showError(
+      "Error during POST Operator2 request",
+      error.response?.data?.message || error.message
     );
     throw error;
   }

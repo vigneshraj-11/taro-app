@@ -21,6 +21,7 @@ function Reasons() {
     vendor,
     partnames,
     opertors,
+    operator2,
   } = state || {};
   const [machine, setMachine] = useState("");
   const [color, setColor] = useState("");
@@ -42,7 +43,7 @@ function Reasons() {
     setTimeout(() => {
       fetchReasonsList();
       setLoading(false);
-    }, 3000);
+    }, 1000);
   }, []);
 
   return (
@@ -53,7 +54,19 @@ function Reasons() {
         {backButton !== false && (
           <div
             className="text-xl text-red-500 font-semibold hover:cursor-pointer"
-            onClick={() => navigate(-1)}
+            onClick={() =>
+              navigate("/hmi", {
+                state: {
+                  machineID: machine,
+                  backgroundColor: color,
+                  programno: programno,
+                  vendor: vendor,
+                  partnames: partnames,
+                  opertors: opertors,
+                  operators2: operator2,
+                },
+              })
+            }
           >
             <Tooltip title={"Go Back"} placement="right">
               <StepBackwardOutlined /> Back
@@ -82,6 +95,7 @@ function Reasons() {
                     vendor,
                     partnames,
                     opertors,
+                    operator2,
                   },
                 });
               }}
@@ -112,6 +126,7 @@ function Reasons() {
               vendor={vendor}
               partnames={partnames}
               opertors={opertors}
+              operator2={operator2}
             />
           </>
         )}

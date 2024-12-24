@@ -46,6 +46,11 @@ const IdealModal = ({ onClose, machineID, programNo }) => {
       if (key === "Tab") return prevValue + "\t";
       if (key === "Enter") {
         setIsKeyboardVisible(false);
+        if (focusedField === "password") {
+          handleLogin();
+        } else if (focusedField === "ideal") {
+          handleSetTime();
+        }
         return prevValue;
       }
       const effectiveKey =

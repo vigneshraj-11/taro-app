@@ -11,8 +11,16 @@ function ReasonDetails() {
   const location = useLocation();
   const [openSettings, setopenSettings] = useState(false);
   const { state } = location;
-  const { reason, machine, color, programno, vendor, partnames, opertors } =
-    state || {};
+  const {
+    reason,
+    machine,
+    color,
+    programno,
+    vendor,
+    partnames,
+    opertors,
+    operator2,
+  } = state || {};
 
   const [reasons, setReasons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +78,7 @@ function ReasonDetails() {
                       vendor: vendor,
                       partnames: partnames,
                       opertors: opertors,
+                      operators2: operator2,
                     },
                   });
                 }}
@@ -105,6 +114,8 @@ function ReasonDetails() {
               vendor={vendor}
               partnames={partnames}
               opertors={opertors}
+              reasonGroup={reason}
+              operator2={operator2}
             />
           </>
         )}
