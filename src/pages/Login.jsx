@@ -92,6 +92,7 @@ function Login() {
 
       const currentShift = getCurrentShift();
       localStorage.setItem("empid", empid);
+      localStorage.setItem("empName", name);
       localStorage.setItem("currentShift", currentShift);
 
       navigate("/welcome", { state: { empName: name, greeting: greeting } });

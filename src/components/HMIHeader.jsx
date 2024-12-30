@@ -72,6 +72,7 @@ function HMIHeader() {
     hour: "numeric",
     minute: "numeric",
     second: "numeric",
+    hourCycle: "h23",
   };
 
   const formattedDate = dateTime.toLocaleString("en-US", dates);
@@ -134,8 +135,8 @@ function HMIHeader() {
 
         <div className="text-center text-orange-400 font-semibold space-y-1 hidden md:block">
           <h4 className="text-xl">Shift: {shift}</h4>
-          <h4 className="text-lg">{formattedDate}</h4>
           <h4 className="text-lg">{formattedTime}</h4>
+          <h4 className="text-lg">{formattedDate}</h4>
         </div>
       </div>
     </header>

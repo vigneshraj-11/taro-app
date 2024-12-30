@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Modal, Input, Form, Typography } from "antd";
 import CustomMessage from "./CustomMessage";
 import VirtualKeyboard from "./VirtualKeyboard";
-import { postReasonDetail } from "../apicalling/apis";
+import { postReasonDetail, usernameLogin } from "../apicalling/apis";
 import { useNavigate } from "react-router-dom";
 
 const { Title, Text } = Typography;
@@ -66,7 +66,7 @@ const ReasonModal = ({
       if (key === "Enter") {
         setIsKeyboardVisible(false);
         if (focusedField === "password") {
-          handleLogin();
+          form.submit();
         } else if (focusedField === "reason") {
           handleSubmitReason();
         }
@@ -94,21 +94,36 @@ const ReasonModal = ({
     }
   };
 
-  const handleLogin = (values) => {
+  const handleLogin = async (values) => {
     const { username, password } = values;
 
-    if (username.toLowerCase() === "admin" && password === "123123") {
-      setIsLoggedIn(true);
-      setModalText("Enter Reason Details");
-      setMessage("Login successful! Please enter reason details.");
-      setMessageType("success");
-      setTimeout(() => {
-        setMessage("");
-        setMessageType("");
-      }, 3000);
-    } else {
-      setMessage("Invalid credentials. Please try again.");
+    try {
+      const response = await usernameLogin(username, password);
+
+      if (response.message === "login successfully") {
+        setIsLoggedIn(true);
+        setModalText("Set your Ideal Time (MM:SS)");
+        setMessage("Login successful! Please set your ideal time.");
+        setMessageType("success");
+
+        setTimeout(() => {
+          setMessage("");
+          setMessageType("");
+        }, 3000);
+      } else {
+        setMessage("Invalid credentials. Please try again.");
+        setMessageType("error");
+
+        setTimeout(() => {
+          setMessage("");
+          setMessageType("");
+        }, 3000);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setMessage("An error occurred. Please try again later.");
       setMessageType("error");
+
       setTimeout(() => {
         setMessage("");
         setMessageType("");

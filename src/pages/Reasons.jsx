@@ -84,7 +84,7 @@ function Reasons() {
           {reasons.map((reason, index) => (
             <div
               key={index}
-              className="p-10 bg-white rounded-lg text-blue-500  cursor-pointer hover:bg-blue-600 hover:text-white shadow-md border border-gray-300 hover:shadow-lg transition duration-300"
+              className="p-10 h-32 bg-white rounded-lg text-blue-500  cursor-pointer hover:bg-blue-600 hover:text-white shadow-md border border-gray-300 hover:shadow-lg transition duration-300"
               onClick={() => {
                 navigate("/reasondetails", {
                   state: {
@@ -104,7 +104,7 @@ function Reasons() {
             </div>
           ))}
           <div
-            className="p-4 bg-white rounded-lg shadow-md border border-gray-300 hover:shadow-lg transition duration-300 flex items-center justify-center text-blue-500 cursor-pointer hover:bg-blue-600 hover:text-white"
+            className="p-4 bg-white h-32 rounded-lg shadow-md border border-gray-300 hover:shadow-lg transition duration-300 flex items-center justify-center text-blue-500 cursor-pointer hover:bg-blue-600 hover:text-white"
             onClick={() => {
               setopenSettings(true);
             }}

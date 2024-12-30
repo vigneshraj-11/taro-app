@@ -299,3 +299,36 @@ export const postOperator2 = async (operator2) => {
     throw error;
   }
 };
+
+export const usernameLogin = async (username, password) => {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/username_pwd`,
+      { username, password },
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error during login:", error);
+    showError("Login Failed", error.response?.data?.message || error.message);
+    throw error;
+  }
+};
+
+export const getPartName = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/get_part_name`, {
+      headers: { "Content-Type": "application/json" },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching part name:", error);
+    showError(
+      "Error fetching part name",
+      error.response?.data?.message || error.message
+    );
+    throw error;
+  }
+};

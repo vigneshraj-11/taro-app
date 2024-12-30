@@ -1,13 +1,18 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Input, Tooltip, Modal } from "antd";
 import HMIHeader from "../components/HMIHeader";
-import { SendOutlined, StepBackwardOutlined } from "@ant-design/icons";
+import {
+  LogoutOutlined,
+  SendOutlined,
+  StepBackwardOutlined,
+} from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import IdealModal from "../components/IdealModal";
 import VirtualKeyboard from "../components/VirtualKeyboard";
 import CustomMessage from "../components/CustomMessage";
 import {
   confirmation,
+  EmpLogin,
   fetchHMIDetails,
   fetchIdealTime,
   fetchVendorList,
@@ -28,6 +33,7 @@ const HMI = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [openAlert, setopenAlert] = useState(false);
+  const [openAlert1, setopenAlert1] = useState(false);
   const [openSettings, setopenSettings] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
@@ -72,6 +78,10 @@ const HMI = () => {
   const [vendorOptions, setVendorOptions] = useState([]);
   const [programOptions, setProgramOptions] = useState([]);
   const [receivedTimestamp, setReceivedTimestamp] = useState(0);
+  const storedEmpName = localStorage.getItem("empName");
+
+  const refreshInterval =
+    parseInt(process.env.REACT_APP_REFRESH_INTERVAL, 10) || 15000;
 
   useEffect(() => {
     if (!systemEnableStatus) return;
@@ -107,11 +117,11 @@ const HMI = () => {
 
   function getStatusMessage(statusColor) {
     switch (statusColor) {
-      case "#fdfd96":
-        return "Ideal";
-      case "#5FEE5F":
+      case "#ffff52":
+        return "Idle";
+      case "#0d8b0d":
         return "Running";
-      case "#FF6666":
+      case "#f54848":
         return "Maintenance";
       case "#b9b9fc":
         return "Unknown";
@@ -165,6 +175,7 @@ const HMI = () => {
 
       const currentMode = modes[type];
       const isEnabled = !currentMode.enabledState;
+      alert(isEnabled);
       const newStatus = isEnabled
         ? `${type.toUpperCase()} ON`
         : `${type.toUpperCase()} OFF`;
@@ -175,7 +186,17 @@ const HMI = () => {
       currentMode.disable2(true);
 
       if (type !== "Maintenance") setIsDisabled(false);
-      if (isEnabled) setSystemEnableStatus(true);
+      if (isEnabled) {
+        setSystemEnableStatus(true);
+      } else {
+        setTime(0);
+        setReceivedTimestamp(0);
+        setIsDisabled(true);
+        setSystemEnableStatus(false);
+        setSetupDisabled(false);
+        setMaintenceDisabled(false);
+        setReworkDisabled(false);
+      }
 
       setOpen(false);
 
@@ -208,8 +229,12 @@ const HMI = () => {
         }, 3000);
       }
 
-      fetchHMI();
+      // fetchHMI();
       setConfirmLoading(false);
+
+      // navigate("/hmi", {
+      //   state: { machineID: machineID, backgroundColor: backgroundColor },
+      // });
       setOpen(false);
     } catch (error) {
       console.error("Error in handleOk:", error);
@@ -267,6 +292,7 @@ const HMI = () => {
   const fetchHMI = async () => {
     try {
       const response = await fetchHMIDetails(machineID);
+      console.log(response);
       if (response) {
         const transformedData = response.map((item) => ({
           programno: item.programno,
@@ -275,6 +301,7 @@ const HMI = () => {
         }));
 
         setTransformedData(transformedData);
+        console.log(transformedData);
 
         const options = transformedData.map((program) => ({
           label: program.programno,
@@ -306,10 +333,15 @@ const HMI = () => {
         if (operators2) {
           setOperator2(operators2.operator2);
         } else {
-          setOperator2(response[0].operator2);
+          if (response[0]?.operator2 !== null) {
+            setOperator2(response[0].operator2);
+          }
         }
 
-        if (response[0].tooglestatus === 1) {
+        console.log("response", response[0].tooglestatus);
+        const toggle_st = response[0].tooglestatus ? 1 : 0;
+        console.log("button status", toggle_st);
+        if (toggle_st === 1) {
           const program = response[0].programno;
           const idealTimeResponse = await fetchIdealTime(machineID, program, 1);
           if (
@@ -361,6 +393,17 @@ const HMI = () => {
           }
         } else {
           const program = response[0].programno;
+
+          if (response[0]?.start_time !== null) {
+            setReceivedTimestamp(response[0]?.start_time);
+            setSystemEnableStatus(true);
+            getStatusMessage("#fdfd96");
+          } else {
+            getStatusMessage(backgroundValue);
+            setSystemEnableStatus(false);
+            setReceivedTimestamp(0);
+          }
+
           const idealTimeResponse = await fetchIdealTime(machineID, program, 0);
           if (
             idealTimeResponse &&
@@ -387,7 +430,13 @@ const HMI = () => {
 
   useEffect(() => {
     fetchHMI();
-  }, []);
+
+    const interval = setInterval(() => {
+      fetchHMI();
+    }, refreshInterval);
+
+    return () => clearInterval(interval);
+  }, [refreshInterval]);
 
   useEffect(() => {
     let initialTimeDifference;
@@ -656,15 +705,22 @@ const HMI = () => {
       }, 3000);
       return;
     }
-    const response = await postOperator2(operator2);
+    const response = await EmpLogin(operator2);
 
     if (response) {
-      setMessage("Operator2 Updated Successfully");
-      setMessageType("success");
+      const { name, greeting, message } = response;
+
+      const msg = message + ", " + name;
+
+      handleShowModal2(greeting, msg);
+
+      // setMessage(`${name} Updated Successfully`);
+      // setMessageType("success");
 
       setTimeout(() => {
         setMessage("");
         setMessageType("");
+        setopenAlert1(false);
       }, 3000);
     }
   };
@@ -673,6 +729,12 @@ const HMI = () => {
     setModalTitle(title);
     setModalText(content);
     setopenAlert(true);
+  };
+
+  const handleShowModal2 = (title, content) => {
+    setModalTitle(title);
+    setModalText(content);
+    setopenAlert1(true);
   };
 
   const renderFooter = () => {
@@ -700,6 +762,14 @@ const HMI = () => {
             >
               Okay
             </button>
+            <button
+              className="bg-red-500 text-white w-28 rounded-lg p-2 hover:bg-red-700"
+              onClick={() => {
+                navigate("/ms");
+              }}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       );
@@ -714,6 +784,14 @@ const HMI = () => {
               }}
             >
               Okay
+            </button>
+            <button
+              className="bg-red-500 text-white w-28 rounded-lg p-2 hover:bg-red-700"
+              onClick={() => {
+                navigate("/ms");
+              }}
+            >
+              Cancel
             </button>
           </div>
         </div>
@@ -825,41 +903,68 @@ const HMI = () => {
     const newMode = modeMapping[machineStatus] || "";
     const newStatus = newMode ? 1 : 0;
 
-    const requestData = {
+    const requestData1 = {
       machine_id: machineID,
-      operation,
+      operation: operation,
       operator1: empId,
-      operator2,
+      operator2: operator2,
       part_name: partname,
-      program: selectedProgram,
-      shift,
-      vendor_name: selectedVendor,
+      progarm: selectedProgram,
+      shift: shift,
       machine_mode: newMode,
-      machine_status: newStatus,
-      reason: reasonMessage,
-      ideal_time: formatTime(time),
+      machine_status: 0,
+      vendor_name: selectedVendor,
     };
 
-    console.log("Confirmation Data:", requestData); //remove
+    console.log("Request Data:", requestData1);
 
-    const response = await confirmation(requestData);
-
-    console.log("Response:", response); //remove
+    const response = await toggleMachineMode(requestData1);
 
     if (response) {
-      setMessage("Updated Successfully");
-      setMessageType("success");
+      const requestData = {
+        machine_id: machineID,
+        operation,
+        operator1: empId,
+        operator2,
+        part_name: partname,
+        program: selectedProgram,
+        shift,
+        vendor_name: selectedVendor,
+        machine_mode: newMode,
+        machine_status: newStatus,
+        reason: reasonMessage,
+        ideal_time: formatTime(time),
+      };
+
+      console.log("Confirmation Data:", requestData); //remove
+
+      const response1 = await confirmation(requestData);
+
+      console.log("Response:", response1); //remove
+
+      if (response1) {
+        setMessage("Updated Successfully");
+        setMessageType("success");
+
+        setTimeout(() => {
+          setMessage("");
+          setMessageType("");
+        }, 3000);
+
+        setReasonMessage("Reason Message");
+
+        navigate("/hmi", {
+          state: { machineID: machineID, backgroundColor: backgroundColor },
+        });
+      }
+    } else {
+      setMessage("Issue while updating");
+      setMessageType("error");
 
       setTimeout(() => {
         setMessage("");
         setMessageType("");
       }, 3000);
-
-      setReasonMessage("Reason Message");
-
-      navigate("/hmi", {
-        state: { machineID: machineID, backgroundColor: backgroundColor },
-      });
     }
   };
 
@@ -869,7 +974,20 @@ const HMI = () => {
         <HMIHeader />
 
         <div className="flex items-center justify-between p-5 w-full">
-          <div className="flex-1 text-xl font-semibold text-center">HMI</div>
+          <div className="flex-1 text-xl font-semibold">
+            <span className=" hover:cursor-pointer">
+              {storedEmpName}&nbsp;&nbsp;&nbsp;
+              <Tooltip title="Logout" placement="right">
+                <LogoutOutlined
+                  className="text-red-500 font-semibold"
+                  onClick={() => {
+                    localStorage.clear();
+                    navigate("/login");
+                  }}
+                />
+              </Tooltip>
+            </span>
+          </div>
           <div
             className="flex-shrink-0 text-xl text-red-500 font-semibold hover:cursor-pointer text-right"
             onClick={() => {
@@ -877,12 +995,12 @@ const HMI = () => {
             }}
           >
             <div
-              className={`${
-                reasonMessage &&
-                reasonMessage.toLowerCase() !== "reason message"
-                  ? "hidden"
-                  : "block"
-              }`}
+            // className={`${
+            //   reasonMessage &&
+            //   reasonMessage.toLowerCase() !== "reason message"
+            //     ? "hidden"
+            //     : "block"
+            // }`}
             >
               <Tooltip title="Go Back" placement="right">
                 <StepBackwardOutlined /> Back
@@ -893,7 +1011,7 @@ const HMI = () => {
 
         <div className="grid grid-cols-2 gap-8 p-5">
           <div className="flex items-center">
-            <label className="w-1/3 text-lg font-semibold">MACHINE ID:</label>
+            <label className="w-1/3 text-2xl font-semibold">MACHINE ID:</label>
             <Input
               placeholder="MACHINE123"
               className="w-2/3 rounded-lg input-design"
@@ -903,7 +1021,7 @@ const HMI = () => {
           </div>
 
           <div className="flex items-center ml-5">
-            <label className="w-1/3 text-lg font-semibold">SHIFT:</label>
+            <label className="w-1/3 text-2xl  font-semibold">SHIFT:</label>
             <Input
               placeholder="1"
               className="w-2/3  rounded-lg input-design"
@@ -913,7 +1031,7 @@ const HMI = () => {
           </div>
 
           <div className="flex items-center">
-            <label className="w-1/3 text-lg font-semibold">
+            <label className="w-1/3 text-2xl  font-semibold">
               PROGRAM NO: <span className="text-red-600 font-semibold">*</span>
             </label>
             <div className="relative w-2/3">
@@ -961,7 +1079,7 @@ const HMI = () => {
           </div>
 
           <div className="flex items-center ml-5">
-            <label className="w-1/3 text-lg font-semibold">
+            <label className="w-1/3 text-2xl  font-semibold">
               VENDOR: <span className="text-red-600 font-semibold">*</span>
             </label>
             <div className="relative w-2/3">
@@ -1009,7 +1127,7 @@ const HMI = () => {
           </div>
 
           <div className="flex items-center">
-            <label className="w-1/3 text-lg font-semibold">PART NAME:</label>
+            <label className="w-1/3 text-2xl  font-semibold">PART NAME:</label>
             <Input
               value={partname}
               placeholder="PART001"
@@ -1019,7 +1137,7 @@ const HMI = () => {
           </div>
 
           <div className="flex items-center ml-5">
-            <label className="w-1/3 text-lg font-semibold">OPERATION:</label>
+            <label className="w-1/3 text-2xl  font-semibold">OPERATION:</label>
             <Input
               value={operation}
               placeholder="OP001"
@@ -1029,7 +1147,7 @@ const HMI = () => {
           </div>
 
           <div className="flex items-center">
-            <label className="w-1/3 text-lg font-semibold">OPERATOR 1:</label>
+            <label className="w-1/3 text-2xl  font-semibold">OPERATOR 1:</label>
             <Input
               placeholder="OP123"
               className="w-2/3  rounded-lg input-design"
@@ -1039,10 +1157,11 @@ const HMI = () => {
           </div>
 
           <div className="flex items-center ml-5">
-            <label className="w-1/3 text-lg font-semibold">OPERATOR 2:</label>
+            <label className="w-1/3 text-2xl  font-semibold">OPERATOR 2:</label>
             <div className="w-2/3 flex space-x-5">
               <Input
                 placeholder="456"
+                maxLength={10}
                 className="rounded-lg input-design"
                 ref={inputRef}
                 value={operator2}
@@ -1061,11 +1180,11 @@ const HMI = () => {
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center mt-5">
           <div className="flex items-center justify-between">
             <div>
               <button
-                className={`px-4 font-semibold py-2 rounded-md shadow w-80 ${
+                className={`px-4 font-semibold py-2 text-xl  rounded-md shadow w-80 h-14 ${
                   setupEnabled
                     ? "bg-goldenrod text-black hover:bg-lightgoldenrod"
                     : "bg-blue-500 text-white hover:bg-blue-600"
@@ -1077,7 +1196,7 @@ const HMI = () => {
               </button>
 
               <button
-                className={`px-4 font-semibold py-2 rounded-md ml-4 shadow w-80 ${
+                className={`px-4 font-semibold py-2 rounded-md ml-4 text-xl h-14 shadow w-80 ${
                   maintenanceEnabled
                     ? "bg-goldenrod text-black hover:bg-lightgoldenrod"
                     : "bg-blue-500 text-white hover:bg-blue-600"
@@ -1091,7 +1210,7 @@ const HMI = () => {
               </button>
 
               <button
-                className={`text-white px-4 py-2 font-semibold rounded-md ml-4 shadow w-80 ${
+                className={`text-white px-4 py-2 font-semibold text-xl rounded-md h-14 ml-4 shadow w-80 ${
                   reworkEnabled
                     ? "bg-red-600 hover:bg-red-700"
                     : "bg-blue-500 hover:bg-blue-600"
@@ -1104,10 +1223,10 @@ const HMI = () => {
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center mt-5">
           <div className="flex items-center justify-between p-5 w-full space-x-5">
             <button
-              className="w-1/3 px-4 py-2 text-center font-semibold rounded-md shadow border border-black hover:bg-blue-500 hover:text-white hover:border-blue-600"
+              className="w-1/3 px-4 py-2 h-14 text-center font-semibold text-xl rounded-md shadow border border-black hover:bg-blue-500 hover:text-white hover:border-blue-600"
               onClick={() => {
                 navigate("/toollife");
               }}
@@ -1115,7 +1234,7 @@ const HMI = () => {
               TOOL LIFE
             </button>
             <button
-              className="w-1/3 px-4 py-2 text-center font-semibold rounded-md shadow border border-black hover:bg-blue-500 hover:text-white hover:border-blue-600"
+              className="w-1/3 px-4 py-2 h-14 text-center text-xl font-semibold rounded-md shadow border border-black hover:bg-blue-500 hover:text-white hover:border-blue-600"
               onClick={() => {
                 onSettingHandler();
               }}
@@ -1123,7 +1242,7 @@ const HMI = () => {
               SETTINGS
             </button>
             <button
-              className="w-1/3 px-4 py-2 text-center rounded-md font-semibold shadow border border-black hover:bg-blue-500 hover:text-white hover:border-blue-600"
+              className="w-1/3 px-4 py-2 h-14 text-center text-xl rounded-md font-semibold shadow border border-black hover:bg-blue-500 hover:text-white hover:border-blue-600"
               onClick={() => {
                 navigate("/reasons", {
                   state: {
@@ -1142,7 +1261,7 @@ const HMI = () => {
             </button>
           </div>
         </div>
-        <div className="flex w-full p-5 space-x-5 mt-[-20px]">
+        <div className="flex w-full p-5 space-x-5 ">
           <div
             className={`w-5/6 border border-black text-center font-semibold p-4 rounded-lg relative`}
             style={{
@@ -1169,15 +1288,16 @@ const HMI = () => {
                 position: "relative",
                 zIndex: 1,
               }}
+              className="text-xl"
             >
               {machineStatus}
             </div>
           </div>
-          <div className="w-1/6 border border-black text-center p-4  font-semibold rounded-lg">
+          <div className="w-1/6 border border-black text-center p-4 text-xl  font-semibold rounded-lg">
             {formatTime(time)}
           </div>
         </div>
-        <div className="flex w-full p-5 space-x-5 mt-[-20px]">
+        <div className="flex w-full p-5 space-x-5 ">
           <div className="w-5/6 border text-2xl border-black text-center font-semibold text-black p-4 rounded-lg">
             {reasonMessage}
           </div>
@@ -1186,7 +1306,7 @@ const HMI = () => {
               reasonMessage && reasonMessage.toLowerCase() !== "reason message"
                 ? "animate-blink"
                 : ""
-            } text-lg border-black font-semibold text-center p-4 rounded-lg hover:bg-blue-500 hover:text-white hover:cursor-pointer`}
+            } text-xl border-black font-semibold text-center p-4 rounded-lg hover:bg-blue-500 hover:text-white hover:cursor-pointer`}
             onClick={() => {
               onConfirmation();
             }}
@@ -1233,6 +1353,14 @@ const HMI = () => {
         </div>
       </Modal>
       <Modal open={openAlert} footer={renderFooter()}>
+        <div className="text-3xl font-semibold text-center mt-5 mb-10">
+          <p>{modalTitle}</p>
+        </div>
+        <div className="text-2xl text-gray-500 font-semibold text-center mt-10 mb-10">
+          <p>{modalText}</p>
+        </div>
+      </Modal>
+      <Modal open={openAlert1} footer={<></>}>
         <div className="text-3xl font-semibold text-center mt-5 mb-10">
           <p>{modalTitle}</p>
         </div>

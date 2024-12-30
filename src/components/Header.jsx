@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import logos from "../assets/images/Logo.png";
 import Etherlogo from "../assets/images/ethernet.png";
 import { useLocation } from "react-router-dom";
-import { fetchConnection } from "../apicalling/apis";
+import { fetchConnection, getPartName } from "../apicalling/apis";
 import RdEtherUp from "../assets/images/Rd_ether_up.png";
 import RdEtherDown from "../assets/images/Rd_ether_down.png";
 import GrEtherUp from "../assets/images/Gr_ether_up.png";
@@ -15,6 +15,7 @@ function Header() {
   const [machineValue, setMachineValue] = useState("");
   const location = useLocation();
   const [selectedReason, setSelectedReason] = useState("");
+  const [partname, setPartname] = useState("");
   const [ethernetStatus, setEthernetStatus] = useState({
     ethernet1: "disconnected",
     ethernet2: "disconnected",
@@ -51,6 +52,8 @@ function Header() {
           ethernet1: response.data.ethernet1,
           ethernet2: response.data.ethernet2,
         });
+        const partResponse = await getPartName();
+        setPartname(partResponse.partname);
       } catch (error) {
         console.error("Error fetching connection status:", error);
       }
@@ -75,6 +78,7 @@ function Header() {
     hour: "numeric",
     minute: "numeric",
     second: "numeric",
+    hourCycle: "h23",
   };
 
   const formattedDate = dateTime.toLocaleString("en-US", dates);
@@ -95,7 +99,7 @@ function Header() {
       <div className="text-white text-center">
         <h1 className="text-3xl font-semibold mb-2">C2 IMPELLER CELL</h1>
         <h4 className="text-2xl text-yellow-300 font-semibold">
-          Part Name: DMS02 IMPELLER
+          Part Name: {partname}
         </h4>
       </div>
 
@@ -140,8 +144,8 @@ function Header() {
 
         <div className="text-center text-orange-400 font-semibold space-y-1 hidden md:block">
           <h4 className="text-xl">Shift: {shift}</h4>
-          <h4 className="text-lg">{formattedDate}</h4>
           <h4 className="text-lg">{formattedTime}</h4>
+          <h4 className="text-lg">{formattedDate}</h4>
         </div>
       </div>
     </header>
