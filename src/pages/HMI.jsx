@@ -46,6 +46,8 @@ const HMI = () => {
   const [maxTime, setMaxTime] = useState(300);
   const [machineIDValue, setMachineIDValue] = useState(null);
   const [backgroundValue, setBackgroundValue] = useState(null);
+  //New Changes
+  const [tempBackgroundValue, setTempBackgroundValue] = useState(null);
   const [empId, setEmpId] = useState(null);
   const [shift, setShift] = useState(null);
   const location = useLocation();
@@ -79,6 +81,7 @@ const HMI = () => {
   const [programOptions, setProgramOptions] = useState([]);
   const [receivedTimestamp, setReceivedTimestamp] = useState(0);
   const storedEmpName = localStorage.getItem("empName");
+  const storedEmpName1 = localStorage.getItem("empName1");
 
   const refreshInterval =
     parseInt(process.env.REACT_APP_REFRESH_INTERVAL, 10) || 15000;
@@ -187,8 +190,14 @@ const HMI = () => {
 
       if (type !== "Maintenance") setIsDisabled(false);
       if (isEnabled) {
+        //New Changes
         setSystemEnableStatus(true);
+        setBackgroundValue("white");
       } else {
+        //New Changes
+        if (backgroundValue === "white") {
+          setBackgroundValue(tempBackgroundValue);
+        }
         setTime(0);
         setReceivedTimestamp(0);
         setIsDisabled(true);
@@ -370,6 +379,8 @@ const HMI = () => {
             }
           }
           setSystemEnableStatus(true);
+          //New Changes
+          setBackgroundValue("white");
           //Remove this only for Dev purposes
           console.log("Toggle status: " + 1);
           console.log("Ideal Time: " + maxTime);
@@ -397,10 +408,16 @@ const HMI = () => {
           if (response[0]?.start_time !== null) {
             setReceivedTimestamp(response[0]?.start_time);
             setSystemEnableStatus(true);
+            //New Changes
+            setBackgroundValue("white");
             getStatusMessage("#fdfd96");
           } else {
             getStatusMessage(backgroundValue);
             setSystemEnableStatus(false);
+            //New Changes
+            if (backgroundValue === "white") {
+              setBackgroundValue(tempBackgroundValue);
+            }
             setReceivedTimestamp(0);
           }
 
@@ -509,6 +526,7 @@ const HMI = () => {
 
   useEffect(() => {
     const storedEmpId = localStorage.getItem("empid");
+
     const storedShift = localStorage.getItem("currentShift");
 
     if (storedShift && storedEmpId) {
@@ -516,6 +534,8 @@ const HMI = () => {
       setEmpId(storedEmpId);
       setMachineIDValue(machineID);
       setBackgroundValue(backgroundColor);
+      //New Changes
+      setTempBackgroundValue(backgroundColor);
       if (reasonValue) {
         setReasonMessage(reasonValue);
       }
@@ -685,16 +705,18 @@ const HMI = () => {
   ]);
 
   const submitOperator2 = async () => {
-    if (operator2 === "") {
+    if (!operator2) {
       setMessage("Please fill in Operator 2 before submitting.");
       setMessageType("error");
 
+      // Reset message after 3 seconds
       setTimeout(() => {
         setMessage("");
         setMessageType("");
       }, 3000);
       return;
     }
+
     if (operator2 === empId) {
       setMessage("Operator 1 and Operator 2 cannot be the same.");
       setMessageType("error");
@@ -705,22 +727,29 @@ const HMI = () => {
       }, 3000);
       return;
     }
-    const response = await EmpLogin(operator2);
 
-    if (response) {
-      const { name, greeting, message } = response;
+    //New Changes
 
-      const msg = message + ", " + name;
+    try {
+      const response = await EmpLogin(operator2);
 
-      handleShowModal2(greeting, msg);
+      if (response) {
+        const { name, greeting, message } = response;
 
-      // setMessage(`${name} Updated Successfully`);
-      // setMessageType("success");
+        localStorage.setItem("empName1", name);
+
+        const msg = `${message}, ${name}`;
+        handleShowModal2(greeting, msg);
+      }
+    } catch (error) {
+      console.error("Login Error:", error);
+
+      setMessage("An error occurred while logging in. Please try again.");
+      setMessageType("error");
 
       setTimeout(() => {
         setMessage("");
         setMessageType("");
-        setopenAlert1(false);
       }, 3000);
     }
   };
@@ -976,16 +1005,18 @@ const HMI = () => {
         <div className="flex items-center justify-between p-5 w-full">
           <div className="flex-1 text-xl font-semibold">
             <span className=" hover:cursor-pointer">
-              {storedEmpName}&nbsp;&nbsp;&nbsp;
               <Tooltip title="Logout" placement="right">
                 <LogoutOutlined
-                  className="text-red-500 font-semibold"
+                  className="text-red-500 font-semibold text-2xl hover:cursor-pointer"
                   onClick={() => {
                     localStorage.clear();
                     navigate("/login");
                   }}
                 />
               </Tooltip>
+              &nbsp;&nbsp;
+              {storedEmpName}
+              {storedEmpName1 && `/ ${storedEmpName1}`}
             </span>
           </div>
           <div

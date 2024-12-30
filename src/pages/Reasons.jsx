@@ -51,7 +51,7 @@ function Reasons() {
       <HMIHeader />
       <div className="flex items-center justify-between p-5">
         <div className="text-xl font-semibold">Reasons</div>
-        {backButton !== false && (
+        {/* {backButton !== false && ( */}
           <div
             className="text-xl text-red-500 font-semibold hover:cursor-pointer"
             onClick={() =>
@@ -72,7 +72,7 @@ function Reasons() {
               <StepBackwardOutlined /> Back
             </Tooltip>
           </div>
-        )}
+        {/* )} */}
       </div>
 
       {loading ? (

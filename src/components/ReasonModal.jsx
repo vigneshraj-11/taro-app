@@ -101,18 +101,18 @@ const ReasonModal = ({
       const response = await usernameLogin(username, password);
 
       if (response.message === "login successfully") {
-        setIsLoggedIn(true);
+      setIsLoggedIn(true);
         setModalText("Set your Ideal Time (MM:SS)");
         setMessage("Login successful! Please set your ideal time.");
-        setMessageType("success");
+      setMessageType("success");
 
-        setTimeout(() => {
-          setMessage("");
-          setMessageType("");
-        }, 3000);
-      } else {
-        setMessage("Invalid credentials. Please try again.");
-        setMessageType("error");
+      setTimeout(() => {
+        setMessage("");
+        setMessageType("");
+      }, 3000);
+    } else {
+      setMessage("Invalid credentials. Please try again.");
+      setMessageType("error");
 
         setTimeout(() => {
           setMessage("");

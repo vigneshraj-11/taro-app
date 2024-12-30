@@ -16,6 +16,7 @@ function MachineStatus() {
   const refreshInterval =
     parseInt(process.env.REACT_APP_REFRESH_INTERVAL, 10) || 15000;
   const storedEmpName = localStorage.getItem("empName");
+  const storedEmpName1 = localStorage.getItem("empName1");
   const fetchMachineData = async (showLoader = false) => {
     try {
       if (showLoader) setLoading(true);
@@ -88,17 +89,19 @@ function MachineStatus() {
       <Header />
       <div className="flex items-center justify-between p-5 w-full">
         <div className="flex-1 text-xl font-semibold">
-          <span className=" hover:cursor-pointer">
-            {storedEmpName}&nbsp;&nbsp;&nbsp;
+          <span className="text-2xl hover:cursor-pointer">
             <Tooltip title="Logout" placement="right">
               <LogoutOutlined
-                className="text-red-500 font-semibold"
+                className="text-red-500 font-semibold hover:cursor-pointer"
                 onClick={() => {
                   localStorage.clear();
                   navigate("/login");
                 }}
               />
             </Tooltip>
+            &nbsp;&nbsp;
+            {storedEmpName}
+            {storedEmpName1 && `/ ${storedEmpName1}`}
           </span>
         </div>
         <div
