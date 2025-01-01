@@ -18,9 +18,11 @@ import {
   fetchVendorList,
   postOperator2,
   toggleMachineMode,
+  setPercentage,
 } from "../apicalling/apis";
 
 const HMI = () => {
+  const [openLogoutModal, setOpenLogoutModal] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info");
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
@@ -82,6 +84,8 @@ const HMI = () => {
   const [receivedTimestamp, setReceivedTimestamp] = useState(0);
   const storedEmpName = localStorage.getItem("empName");
   const storedEmpName1 = localStorage.getItem("empName1");
+
+  const [alertModal, setAlertModal] = useState(true);
 
   const refreshInterval =
     parseInt(process.env.REACT_APP_REFRESH_INTERVAL, 10) || 15000;
@@ -178,6 +182,21 @@ const HMI = () => {
 
       const currentMode = modes[type];
       const isEnabled = !currentMode.enabledState;
+      if (!isEnabled) {
+        const backButton = false;
+        navigate("/reasons", {
+          state: {
+            backButton,
+            machineID,
+            backgroundColor,
+            programno: { selectedProgram },
+            vendor: { selectedVendor },
+            partnames: { partname },
+            opertors: { operation },
+            operator2: { operator2 },
+          },
+        });
+      }
       alert(isEnabled);
       const newStatus = isEnabled
         ? `${type.toUpperCase()} ON`
@@ -640,10 +659,12 @@ const HMI = () => {
 
       if (newTime >= maxTime) {
         if (reasonMessage === "" || reasonMessage === "Reason Message") {
-          handleShowModal1(
-            "Red Alert",
-            "Critical: Idle time has exceeded the 0-minute limit!"
-          );
+          if (!alertModal) {
+            handleShowModal1(
+              "Red Alert",
+              "Critical: Idle time has exceeded limit!"
+            );
+          }
         }
       }
 
@@ -679,17 +700,30 @@ const HMI = () => {
       setTime(elapsedSeconds);
 
       if (elapsedSeconds === Math.floor(maxTime * 0.8)) {
+        try {
+          const res = setPercentage(80);
+        } catch (error) {
+          console.error("Error fetching part name:", error);
+        }
         if (reasonMessage === "" || reasonMessage === "Reason Message") {
           handleShowModal1("Yellow Alert", "Reaching 80% of allocated time!");
         }
       }
 
       if (elapsedSeconds >= maxTime) {
+        // alert('100% Reached')
+        try {
+          const res = setPercentage(100);
+        } catch (error) {
+          console.error("Error fetching part name:", error);
+        }
         if (reasonMessage === "" || reasonMessage === "Reason Message") {
-          handleShowModal1(
-            "Red Alert",
-            "Critical: Idle time has exceeded the 0-minute limit!"
-          );
+          if (!alertModal) {
+            handleShowModal1(
+              "Red Alert",
+              "Critical: Idle time has exceeded limit!"
+            );
+          }
         }
       }
     }
@@ -794,7 +828,8 @@ const HMI = () => {
             <button
               className="bg-red-500 text-white w-28 rounded-lg p-2 hover:bg-red-700"
               onClick={() => {
-                navigate("/ms");
+                setopenAlert(false);
+                setAlertModal(false);
               }}
             >
               Cancel
@@ -817,7 +852,7 @@ const HMI = () => {
             <button
               className="bg-red-500 text-white w-28 rounded-lg p-2 hover:bg-red-700"
               onClick={() => {
-                navigate("/ms");
+                setopenAlert(false);
               }}
             >
               Cancel
@@ -1009,8 +1044,7 @@ const HMI = () => {
                 <LogoutOutlined
                   className="text-red-500 font-semibold text-2xl hover:cursor-pointer"
                   onClick={() => {
-                    localStorage.clear();
-                    navigate("/login");
+                    setOpenLogoutModal(true);
                   }}
                 />
               </Tooltip>
@@ -1397,6 +1431,38 @@ const HMI = () => {
         </div>
         <div className="text-2xl text-gray-500 font-semibold text-center mt-10 mb-10">
           <p>{modalText}</p>
+        </div>
+      </Modal>
+      <Modal
+        open={openLogoutModal}
+        footer={
+          <>
+            <div className="flex justify-center mb-5" id="redAlert">
+              <div className="flex justify-center w-80 space-x-5">
+                <button
+                  className="bg-blue-500 text-white w-28 rounded-lg p-2 hover:bg-blue-700"
+                  onClick={() => {
+                    localStorage.clear();
+                    navigate("/login");
+                  }}
+                >
+                  Okay
+                </button>
+                <button
+                  className="bg-red-500 text-white w-28 rounded-lg p-2 hover:bg-red-700"
+                  onClick={() => {
+                    setOpenLogoutModal(false);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </>
+        }
+      >
+        <div className="text-2xl text-gray-500 font-semibold text-center mt-10 mb-10">
+          <p>Are you sure to Logout</p>
         </div>
       </Modal>
       <div>

@@ -332,3 +332,19 @@ export const getPartName = async () => {
     throw error;
   }
 };
+
+
+
+export const setPercentage = async (percentage) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/percentage/${percentage}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching:", error);
+    showError(
+      "Fetching Failed",
+      error.response?.data?.message || error.message
+    );
+    throw error;
+  }
+};
