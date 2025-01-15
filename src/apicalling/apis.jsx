@@ -13,15 +13,13 @@ const showError = (title, message) => {
   });
 };
 
-export const EmpLogin = async (empid) => {
+export const EmpLogin = async (key, value) => {
   try {
-    const response = await axios.post(
-      `${BASE_URL}/emplogin`,
-      { empid },
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    console.log(key);
+    const requestBody = { [key]: value };
+    const response = await axios.post(`${BASE_URL}/emplogin`, requestBody, {
+      headers: { "Content-Type": "application/json" },
+    });
     return response.data;
   } catch (error) {
     console.error("Error during login:", error);
@@ -332,8 +330,6 @@ export const getPartName = async () => {
     throw error;
   }
 };
-
-
 
 export const setPercentage = async (percentage) => {
   try {

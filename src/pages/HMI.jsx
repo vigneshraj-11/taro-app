@@ -196,6 +196,7 @@ const HMI = () => {
             operator2: { operator2 },
           },
         });
+        return;
       }
       alert(isEnabled);
       const newStatus = isEnabled
@@ -765,7 +766,7 @@ const HMI = () => {
     //New Changes
 
     try {
-      const response = await EmpLogin(operator2);
+      const response = await EmpLogin("empid2", operator2);
 
       if (response) {
         const { name, greeting, message } = response;

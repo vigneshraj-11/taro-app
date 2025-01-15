@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Tooltip } from "antd";
+import { Table, Button, Tooltip, Select } from "antd";
 import { StepBackwardOutlined } from "@ant-design/icons";
 import HMIHeader from "../components/HMIHeader";
 import { useNavigate } from "react-router-dom";
@@ -135,6 +135,27 @@ const ToolLife = () => {
           Tool Change
         </Button>
       ),
+    },
+    {
+      title: "Reason",
+      key: "Reason",
+      dataIndex: "Reasons",
+      render: (_, record) => {
+        const reasons = record.Reasons; 
+        return (
+          <Select
+            style={{ width: 200 }}
+            placeholder="Select a Reason"
+            disabled={isButtonDisabled(record.key, "Tool Change")}
+          >
+            {reasons.map((reason, index) => (
+              <Select.Option key={index} value={reason}>
+                {reason}
+              </Select.Option>
+            ))}
+          </Select>
+        );
+      },
     },
   ];
 

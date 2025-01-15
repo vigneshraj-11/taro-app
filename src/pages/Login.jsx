@@ -76,7 +76,7 @@ function Login() {
     }
 
     try {
-      const data = await EmpLogin(empid);
+      const data = await EmpLogin("empid1", empid);
       const { name, greeting, message } = data;
 
       setLoginMessage(message);

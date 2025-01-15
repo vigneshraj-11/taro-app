@@ -64,9 +64,9 @@ function MachineStatus() {
         };
       default:
         return {
-          statusTitle: "Unknown",
+          statusTitle: "Waiting for Reason",
           glowClass: "border-blue-400 shadow-glow-blue",
-          backgroundColor: "#b9b9fc",
+          backgroundColor: "rgb(80, 103, 226)",
         };
     }
   };
