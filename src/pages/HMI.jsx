@@ -747,7 +747,6 @@ const HMI = () => {
       setMessage("Please fill in Operator 2 before submitting.");
       setMessageType("error");
 
-      // Reset message after 3 seconds
       setTimeout(() => {
         setMessage("");
         setMessageType("");
@@ -786,6 +785,12 @@ const HMI = () => {
       setMessageType("error");
 
       setTimeout(() => {
+        setMessage("");
+        setMessageType("");
+      }, 3000);
+    } finally {
+      setTimeout(() => {
+        setopenAlert1(false);
         setMessage("");
         setMessageType("");
       }, 3000);
@@ -923,8 +928,23 @@ const HMI = () => {
     option.label.toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSelect1 = (value) => {
+  const handleSelect1 = async (value) => {
     setSelectedVendor(value);
+
+    const programData = {
+      master_id: machineID,
+      program_no: selectedProgram,
+      part_name: partname,
+      operation: operation,
+      vendor_name: value,
+    };
+
+    try {
+      await submitProgramDetails(programData);
+    } catch (e) {
+      console.log(e);
+    }
+
     setIsDropdownVisible1(false);
   };
 
@@ -965,88 +985,91 @@ const HMI = () => {
   }, []);
 
   const onConfirmation = async () => {
-    if (!reasonMessage || reasonMessage === "Reason Message") {
-      setMessage("Please select the reason message");
-      setMessageType("error");
-
-      setTimeout(() => {
-        setMessage("");
-        setMessageType("");
-      }, 3000);
-      return;
-    }
-
-    const modeMapping = {
-      "SETUP ON": "SETUP",
-      "MAINTENANCE ON": "MAINTENANCE",
-      "REWORK ON": "REWORK",
-    };
-
-    const newMode = modeMapping[machineStatus] || "";
-    const newStatus = newMode ? 1 : 0;
-
-    const requestData1 = {
-      machine_id: machineID,
-      operation: operation,
-      operator1: empId,
-      operator2: operator2,
-      part_name: partname,
-      progarm: selectedProgram,
-      shift: shift,
-      machine_mode: newMode,
-      machine_status: 0,
-      vendor_name: selectedVendor,
-    };
-
-    console.log("Request Data:", requestData1);
-
-    const response = await toggleMachineMode(requestData1);
-
-    if (response) {
-      const requestData = {
-        machine_id: machineID,
-        operation,
-        operator1: empId,
-        operator2,
-        part_name: partname,
-        program: selectedProgram,
-        shift,
-        vendor_name: selectedVendor,
-        machine_mode: newMode,
-        machine_status: newStatus,
-        reason: reasonMessage,
-        ideal_time: formatTime(time),
-      };
-
-      console.log("Confirmation Data:", requestData); //remove
-
-      const response1 = await confirmation(requestData);
-
-      console.log("Response:", response1); //remove
-
-      if (response1) {
-        setMessage("Updated Successfully");
-        setMessageType("success");
+    try {
+      if (!reasonMessage || reasonMessage === "Reason Message") {
+        setMessage("Please select the reason message");
+        setMessageType("error");
 
         setTimeout(() => {
           setMessage("");
           setMessageType("");
         }, 3000);
-
-        setReasonMessage("Reason Message");
-
-        navigate("/hmi", {
-          state: { machineID: machineID, backgroundColor: backgroundColor },
-        });
+        return;
       }
-    } else {
-      setMessage("Issue while updating");
-      setMessageType("error");
 
-      setTimeout(() => {
-        setMessage("");
-        setMessageType("");
-      }, 3000);
+      const modeMapping = {
+        "SETUP ON": "SETUP",
+        "MAINTENANCE ON": "MAINTENANCE",
+        "REWORK ON": "REWORK",
+      };
+
+      const newMode = modeMapping[machineStatus] || "";
+      const newStatus = newMode ? 1 : 0;
+
+      const requestData1 = {
+        machine_id: machineID,
+        operation: operation,
+        operator1: empId,
+        operator2: operator2,
+        part_name: partname,
+        progarm: selectedProgram,
+        shift: shift,
+        machine_mode: newMode,
+        machine_status: 0,
+        vendor_name: selectedVendor,
+      };
+
+      console.log("Request Data:", requestData1);
+
+      const response = await toggleMachineMode(requestData1);
+
+      if (response) {
+        const requestData = {
+          machine_id: machineID,
+          operation,
+          operator1: empId,
+          operator2,
+          part_name: partname,
+          program: selectedProgram,
+          shift,
+          vendor_name: selectedVendor,
+          machine_mode: newMode,
+          machine_status: newStatus,
+          reason: reasonMessage,
+          ideal_time: formatTime(time),
+        };
+
+        console.log("Confirmation Data:", requestData); //remove
+
+        const response1 = await confirmation(requestData);
+
+        console.log("Response:", response1); //remove
+
+        if (response1) {
+          setMessage("Updated Successfully");
+          setMessageType("success");
+
+          setTimeout(() => {
+            setMessage("");
+            setMessageType("");
+          }, 3000);
+
+          setReasonMessage("Reason Message");
+        }
+      } else {
+        setMessage("Issue while updating");
+        setMessageType("error");
+
+        setTimeout(() => {
+          setMessage("");
+          setMessageType("");
+        }, 3000);
+      }
+      navigate("/ms");
+    } catch (e) {
+      console.log(e);
+    } finally {
+      navigate("/ms");
     }
   };
 

@@ -7,11 +7,21 @@ const SessionProvider = ({ children }) => {
 
   const getCurrentShift = () => {
     const currentTime = new Date();
-    const hours = currentTime.getHours();
+    const currentHour = currentTime.getHours();
+    const currentMinutes = currentTime.getMinutes();
+    const totalMinutes = currentHour * 60 + currentMinutes;
 
-    if (hours >= 6 && hours < 14) return "1";
-    if (hours >= 14 && hours < 22) return "2";
-    return "3";
+    const shift1Start = 8 * 60;
+    const shift1End = 16 * 60 + 30;
+    const shift2Start = 16 * 60 + 30;
+    const shift2End = 1 * 60;
+    const shift3Start = 1 * 60;
+    const shift3End = 8 * 60;
+
+    if (totalMinutes >= shift1Start && totalMinutes < shift1End) return "1";
+    if (totalMinutes >= shift2Start || totalMinutes < shift2End) return "2";
+    if (totalMinutes >= shift3Start && totalMinutes < shift3End) return "3";
+    return null;
   };
 
   const handleSessionTimeout = useCallback(() => {
@@ -34,9 +44,15 @@ const SessionProvider = ({ children }) => {
     localStorage.setItem("currentShift", currentShift);
 
     const shiftEndTimes = {
-      1: new Date().setHours(14, 0, 0, 0),
-      2: new Date().setHours(22, 0, 0, 0),
-      3: new Date().setHours(6, 0, 0, 0) + 24 * 60 * 60 * 1000,
+      1: new Date().setHours(16, 30, 0, 0),
+      2:
+        new Date().setHours(1, 0, 0, 0) +
+        (currentShift === "2" && new Date().getHours() < 16
+          ? 0
+          : 24 * 60 * 60 * 1000),
+      3:
+        new Date().setHours(8, 0, 0, 0) +
+        (currentShift === "3" ? 24 * 60 * 60 * 1000 : 0),
     };
 
     const currentTime = new Date().getTime();
