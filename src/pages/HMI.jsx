@@ -19,6 +19,7 @@ import {
   postOperator2,
   toggleMachineMode,
   setPercentage,
+  submitProgramDetails,
 } from "../apicalling/apis";
 
 const HMI = () => {
@@ -197,74 +198,75 @@ const HMI = () => {
           },
         });
         return;
-      }
-      alert(isEnabled);
-      const newStatus = isEnabled
-        ? `${type.toUpperCase()} ON`
-        : `${type.toUpperCase()} OFF`;
-
-      currentMode.setEnabled(isEnabled);
-      setMachineStatus(newStatus);
-      currentMode.disable1(true);
-      currentMode.disable2(true);
-
-      if (type !== "Maintenance") setIsDisabled(false);
-      if (isEnabled) {
-        //New Changes
-        setSystemEnableStatus(true);
-        setBackgroundValue("white");
       } else {
-        //New Changes
-        if (backgroundValue === "white") {
-          setBackgroundValue(tempBackgroundValue);
+        alert("Call toggle Status on");
+        const newStatus = isEnabled
+          ? `${type.toUpperCase()} ON`
+          : `${type.toUpperCase()} OFF`;
+
+        currentMode.setEnabled(isEnabled);
+        setMachineStatus(newStatus);
+        currentMode.disable1(true);
+        currentMode.disable2(true);
+
+        if (type !== "Maintenance") setIsDisabled(false);
+        if (isEnabled) {
+          //New Changes
+          setSystemEnableStatus(true);
+          setBackgroundValue("white");
+        } else {
+          //New Changes
+          if (backgroundValue === "white") {
+            setBackgroundValue(tempBackgroundValue);
+          }
+          setTime(0);
+          setReceivedTimestamp(0);
+          setIsDisabled(true);
+          setSystemEnableStatus(false);
+          setSetupDisabled(false);
+          setMaintenceDisabled(false);
+          setReworkDisabled(false);
         }
-        setTime(0);
-        setReceivedTimestamp(0);
-        setIsDisabled(true);
-        setSystemEnableStatus(false);
-        setSetupDisabled(false);
-        setMaintenceDisabled(false);
-        setReworkDisabled(false);
+
+        setOpen(false);
+
+        const requestData = {
+          machine_id: machineID,
+          operation: operation,
+          operator1: empId,
+          operator2: operator2,
+          part_name: partname,
+          progarm: selectedProgram,
+          shift: shift,
+          machine_mode: type.toUpperCase(),
+          machine_status: isEnabled ? 1 : 0,
+          vendor_name: selectedVendor,
+        };
+
+        console.log("Request Data:", requestData);
+
+        const response = await toggleMachineMode(requestData);
+
+        console.log("Response:", response); //remove
+
+        if (response) {
+          setMessage("Updated Successfully");
+          setMessageType("success");
+
+          setTimeout(() => {
+            setMessage("");
+            setMessageType("");
+          }, 3000);
+        }
+
+        // fetchHMI();
+        setConfirmLoading(false);
+
+        // navigate("/hmi", {
+        //   state: { machineID: machineID, backgroundColor: backgroundColor },
+        // });
+        setOpen(false);
       }
-
-      setOpen(false);
-
-      const requestData = {
-        machine_id: machineID,
-        operation: operation,
-        operator1: empId,
-        operator2: operator2,
-        part_name: partname,
-        progarm: selectedProgram,
-        shift: shift,
-        machine_mode: type.toUpperCase(),
-        machine_status: isEnabled ? 1 : 0,
-        vendor_name: selectedVendor,
-      };
-
-      console.log("Request Data:", requestData);
-
-      const response = await toggleMachineMode(requestData);
-
-      console.log("Response:", response); //remove
-
-      if (response) {
-        setMessage("Updated Successfully");
-        setMessageType("success");
-
-        setTimeout(() => {
-          setMessage("");
-          setMessageType("");
-        }, 3000);
-      }
-
-      // fetchHMI();
-      setConfirmLoading(false);
-
-      // navigate("/hmi", {
-      //   state: { machineID: machineID, backgroundColor: backgroundColor },
-      // });
-      setOpen(false);
     } catch (error) {
       console.error("Error in handleOk:", error);
       setConfirmLoading(false);
@@ -370,6 +372,7 @@ const HMI = () => {
         console.log("response", response[0].tooglestatus);
         const toggle_st = response[0].tooglestatus ? 1 : 0;
         console.log("button status", toggle_st);
+        alert("Response from API: " + toggle_st);
         if (toggle_st === 1) {
           const program = response[0].programno;
           const idealTimeResponse = await fetchIdealTime(machineID, program, 1);
@@ -925,7 +928,7 @@ const HMI = () => {
     setIsDropdownVisible1(false);
   };
 
-  const handleSelect = (value) => {
+  const handleSelect = async (value) => {
     setSelectedProgram(value);
 
     const selectedProgramDetails = transformedData.find(
@@ -935,6 +938,20 @@ const HMI = () => {
     if (selectedProgramDetails) {
       setPartname(selectedProgramDetails.partname);
       setOperation(selectedProgramDetails.operation);
+    }
+
+    const programData = {
+      master_id: machineID,
+      program_no: value,
+      part_name: partname,
+      operation: operation,
+      vendor_name: selectedVendor,
+    };
+
+    try {
+      await submitProgramDetails(programData);
+    } catch (e) {
+      console.log(e);
     }
 
     setIsDropdownVisible(false);

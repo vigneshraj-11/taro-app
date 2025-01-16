@@ -344,3 +344,20 @@ export const setPercentage = async (percentage) => {
     throw error;
   }
 };
+
+export const submitProgramDetails = async (data) => {
+  try {
+    console.log("Submitting program details:", data);
+
+    const response = await axios.post(`${BASE_URL}/program_no`, data, {
+      headers: { "Content-Type": "application/json" },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error during submission:", error);
+    throw new Error(
+      error.response?.data?.message || "Failed to submit program details"
+    );
+  }
+};
